@@ -1,0 +1,38 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default-capability",
+  "description": "Capability for the main window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "shell:default",
+    "fs:default",
+    "process:default",
+    "dialog:default",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        "$RESOURCE/**/*",
+        "$APP/*",
+        "$APPDATA/*",
+        "$LOCALDATA/*"
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "cmd": "steamcmd.exe",
+      "args": true
+    },
+    {
+      "identifier": "fs:allow-read",
+      "allow": [
+        "$RESOURCE/*",
+        "$RESOURCE/bin/*",
+        "$RESOURCE/bin/steamcmd/*"
+      ]
+    },
+    "sql:default"
+  ]
+}

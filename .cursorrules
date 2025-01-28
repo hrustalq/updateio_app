@@ -1,0 +1,331 @@
+# Game Update Automator - Правила и рекомендации
+
+## Технологический стек
+- Frontend:
+  - React 18+
+  - TypeScript 5+
+  - Vite
+  - TailwindCSS
+  - shadcn/ui
+- Backend:
+  - Tauri (Rust)
+  - SQLite для локального хранения
+
+## Архитектура
+### Frontend
+- Atomic Design структура компонентов:
+  ```
+  src/
+  ├── components/
+  │   ├── atoms/
+  │   ├── molecules/
+  │   ├── organisms/
+  │   ├── templates/
+  │   └── pages/
+  ├── hooks/
+  ├── stores/
+  ├── services/
+  ├── utils/
+  └── types/
+  ```
+
+### Backend (Rust)
+- Модульная структура:
+  ```
+  src-tauri/
+  ├── src/
+  │   ├── commands/
+  │   ├── services/
+  │   ├── models/
+  │   └── utils/
+  ```
+
+## Правила разработки
+
+### Общие правила
+1. Используем Conventional Commits для коммитов:
+   - feat: новый функционал
+   - fix: исправление ошибок
+   - docs: документация
+   - style: стилистические изменения
+   - refactor: рефакторинг
+   - test: тестирование
+   - chore: обслуживание
+
+2. Ветвление:
+   - main: основная ветка
+   - dev: ветка разработки
+   - feature/*: новый функционал
+   - bugfix/*: исправления
+   - release/*: релизные ветки
+
+### Frontend
+1. Компоненты:
+   - Один компонент - один файл
+   - Используем функциональные компоненты
+   - Пропсы описываем через interface
+   - Стилизация через Tailwind
+
+2. Состояние:
+   - Zustand для глобального состояния
+   - React Query для серверного состояния
+   - useState для локального состояния
+
+3. Типизация:
+   - Строгая типизация TypeScript
+   - Избегаем any
+   - Используем type вместо interface для API типов
+
+### Backend
+1. Rust код:
+   - Следуем Rust стандартам форматирования
+   - Используем cargo fmt
+   - Обязательное документирование публичных функций
+   - Если необходимо добавить плагин - попроси меня добавить
+
+## Используемые библиотеки
+
+### Frontend
+
+```json
+{
+    "dependencies": {
+        "@radix-ui/react": "latest",
+        "@tanstack/react-query": "latest",
+        "zustand": "latest",
+        "shadcn/ui": "latest",
+        "tailwindcss": "latest",
+        "class-variance-authority": "latest",
+        "clsx": "latest",
+        "lucide-react": "latest",
+        "tailwind-merge": "latest"
+    },
+    "devDependencies": {
+        "typescript": "latest",
+        "prettier": "latest",
+        "eslint": "latest",
+        "@vitejs/plugin-react": "latest"
+    }
+}
+```
+
+### Backend
+
+```toml
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-native-tls"] }
+```
+
+
+## Дорожная карта разработки
+
+### Версия 1.0 (MVP)
+- [ ] Базовая структура приложения
+  - [ ] Настройка Tauri
+  - [ ] Интеграция shadcn/ui
+  - [ ] Базовая маршрутизация
+- [ ] Интеграция со Steam
+  - [ ] Определение установленных игр
+  - [ ] Проверка обновлений
+  - [ ] Запуск обновлений
+- [ ] UI/UX
+  - [ ] Дашборд
+  - [ ] Список игр
+  - [ ] Настройки
+
+### Версия 1.1
+- [ ] Epic Games Store интеграция
+- [ ] Планировщик обновлений
+- [ ] Системные уведомления
+
+### Версия 1.2
+- [ ] Battle.net интеграция
+- [ ] Статистика и логирование
+- [ ] Оптимизация производительности
+
+### Версия 2.0
+- [ ] Discord интеграция
+- [ ] Мобильные уведомления
+- [ ] Автоматизация по расписанию
+
+## Правила оформления кода
+
+### TypeScript
+
+```typescript
+// Именование
+
+const ComponentName: React.FC<Props> = () => {};
+const useSomeHook = () => {};
+const CONSTANTS_NAME = '';
+const functionName = () => {};
+
+// Типы
+interface ComponentProps {
+    prop1: string;
+    prop2?: number;
+}
+type ApiResponse = {
+    data: unknown;
+    status: number;
+};
+```
+
+### CSS/Tailwind
+- Используем компонентный подход
+- Следуем методологии Atomic Design
+- Предпочитаем Tailwind утилиты
+- Используем CSS переменные для темизации
+
+### Rust
+
+```rust
+// Именование
+pub struct StructName;
+pub fn function_name() {}
+const CONSTANT_NAME: &str = "";
+// Документация
+/// Краткое описание функции
+///
+/// # Arguments
+/// arg1 - описание аргумента
+///
+/// # Returns
+/// Описание возвращаемого значения
+pub fn documented_function(arg1: String) -> Result<(), Error> {
+// ...
+}
+```
+
+## Реализованный функционал
+
+### Базовые компоненты
+1. Универсальный кэш (src/cache.rs):
+   - Потокобезопасный LRU-кэш с TTL
+   - Поддержка любых типов данных через generics
+   - Trait CacheableEntry для расширения
+   - TimedCacheEntry для временного кэширования
+
+2. Менеджер настроек (src-tauri/src/settings/mod.rs):
+   - Локальное хранение настроек в SQLite
+   - Потокобезопасный доступ через Arc и Mutex
+   - Асинхронные операции с базой данных
+   - Поддержка транзакций при сохранении
+   - Автоматическое создание и миграция БД
+   - Сериализация/десериализация настроек через serde
+
+### Steam интеграция
+1. Менеджер Steam (src-tauri/src/steam/mod.rs):
+   - Инициализация steamcmd
+   - Получение списка установленных игр
+   - Проверка обновлений
+   - Асинхронное обновление с отслеживанием прогресса
+
+2. Парсер Steam (src-tauri/src/steam/parser.rs):
+   - Парсинг информации о приложениях
+   - Парсинг статуса обновления
+   - Детальная информация о прогрессе загрузки
+   - Обработка ошибок
+
+3. Работа с реестром Windows (src-tauri/src/registry/mod.rs):
+   - Универсальный интерфейс для работы с реестром
+   - Поддержка 32 и 64-битных путей
+   - Получение информации об установленных программах
+
+### Переиспользуемые компоненты
+
+1. Кэширование:
+   ```rust
+   use cache::{Cache, TimedCacheEntry, CacheableEntry};
+   
+   // Создание кэша
+   let cache: Cache<K, V> = Cache::new(size);
+   
+   // Использование с временем жизни
+   let entry = TimedCacheEntry::new(value, ttl_minutes);
+   ```
+
+2. Работа с реестром Windows:
+   ```rust
+   use registry::{RegistryReader, WindowsRegistry};
+   
+   // Базовое использование
+   let registry = WindowsRegistry::new();
+   let install_path = registry.get_install_path()?;
+   
+   // Получение информации о программах
+   let programs = registry.get_uninstall_info()?;
+   ```
+
+3. Парсинг вывода команд:
+   ```rust
+   use steam::parser::{parse_app_info, parse_update_status};
+   
+   // Парсинг информации о приложении
+   let app_info = parse_app_info(&output_str)?;
+   
+   // Парсинг статуса обновления
+   let status = parse_update_status(&output_str)?;
+   ```
+
+### Шаблоны реализации
+
+1. Асинхронное выполнение с обратным вызовом:
+   ```rust
+   pub async fn process_with_progress(
+       &self,
+       callback: impl Fn(Status) + Send + 'static,
+   ) -> Result<()>
+   ```
+
+2. Потокобезопасное состояние:
+   ```rust
+   #[derive(Clone)]
+   pub struct SettingsManager {
+       pool: Arc<Pool<Sqlite>>,
+   }
+   ```
+
+3. Работа с базой данных:
+   ```rust
+   // Инициализация соединения
+   let pool = sqlx::sqlite::SqlitePoolOptions::new()
+       .max_connections(5)
+       .connect(&db_url)
+       .await?;
+
+   // Транзакции
+   let mut tx = pool.begin().await?;
+   // ... операции с БД ...
+   tx.commit().await?;
+   ```
+
+4. Обработка ошибок:
+   ```rust
+   #[derive(Debug, thiserror::Error)]
+   pub enum Error {
+       #[error("Database error: {0}")]
+       Database(String),
+       // ...
+   }
+   ```
+
+## Рекомендации по расширению
+
+1. Добавление новых платформ:
+   - Реализовать trait RegistryReader для платформы
+   - Создать парсер вывода команд платформы
+   - Добавить менеджер платформы по аналогии со Steam
+
+2. Кэширование:
+   - Реализовать новые типы CacheableEntry
+   - Добавить персистентное хранение кэша
+   - Расширить TTL-политики
+
+3. Мониторинг:
+   - Добавить сбор метрик
+   - Реализовать логирование в файл
+   - Добавить телеметрию
