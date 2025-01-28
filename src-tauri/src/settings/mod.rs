@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use crate::logging::LogConfig;
 
 mod db;
 pub mod manager;
@@ -21,7 +22,7 @@ pub struct Settings {
     // Системные настройки
     pub cache_ttl_minutes: i64,
     pub cache_size: usize,
-    pub log_level: String,
+    pub logging: LogConfig,
     pub custom_steamcmd_path: Option<PathBuf>,
 }
 
@@ -48,7 +49,7 @@ impl Default for Settings {
             steam_password: None,
             cache_ttl_minutes: 30,
             cache_size: 1000,
-            log_level: "info".to_string(),
+            logging: LogConfig::default(),
             custom_steamcmd_path: None,
         }
     }

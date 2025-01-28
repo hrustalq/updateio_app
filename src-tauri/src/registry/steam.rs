@@ -15,7 +15,7 @@ impl SteamRegistry {
 
     fn parse_vdf_file(&self, path: &PathBuf) -> Result<Vec<PathBuf>> {
         let content = std::fs::read_to_string(path)
-            .map_err(|e| Error::Io(e))?;
+            .map_err(|e| Error::ProcessError(e.to_string()))?;
         
         let mut folders = Vec::new();
         for line in content.lines() {
@@ -31,7 +31,7 @@ impl SteamRegistry {
 
     fn parse_acf_file(&self, path: &PathBuf) -> Result<Option<(String, String)>> {
         let content = std::fs::read_to_string(path)
-            .map_err(|e| Error::Io(e))?;
+            .map_err(|e| Error::ProcessError(e.to_string()))?;
 
         let mut name = None;
         let mut install_dir = None;
@@ -79,9 +79,9 @@ impl RegistryReader for SteamRegistry {
 
         for library in libraries {
             for entry in std::fs::read_dir(&library)
-                .map_err(|e| Error::Io(e))?
+                .map_err(|e| Error::ProcessError(e.to_string()))?
             {
-                let entry = entry.map_err(|e| Error::Io(e))?;
+                let entry = entry.map_err(|e| Error::ProcessError(e.to_string()))?;
                 let path = entry.path();
                 
                 if let Some(ext) = path.extension() {

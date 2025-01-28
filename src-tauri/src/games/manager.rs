@@ -46,7 +46,7 @@ impl GameManager {
         let game = games
             .iter()
             .find(|g| g.id == game_id)
-            .ok_or_else(|| Error::GameNotFound(game_id.to_string()))?;
+            .ok_or_else(|| Error::ProcessError(format!("Game not found: {}", game_id)))?;
 
         match game.platform {
             super::Platform::Steam => {
@@ -65,7 +65,7 @@ impl GameManager {
         let game = games
             .iter()
             .find(|g| g.id == game_id)
-            .ok_or_else(|| Error::GameNotFound(game_id.to_string()))?;
+            .ok_or_else(|| Error::ProcessError(format!("Game not found: {}", game_id)))?;
 
         match game.platform {
             super::Platform::Steam => {
@@ -80,6 +80,6 @@ impl GameManager {
     pub fn emit_update_progress(&self, progress: UpdateProgress) -> Result<()> {
         self.app.as_ref()
             .emit("update-progress", &progress)
-            .map_err(|e| Error::EmitError(e.to_string()))
+            .map_err(|e| Error::ProcessError(e.to_string()))
     }
 } 

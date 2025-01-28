@@ -6,36 +6,67 @@ use crate::settings::manager::SettingsManager;
 use crate::settings::Settings;
 use crate::registry::{steam::SteamRegistry, epic::EpicRegistry, RegistryReader};
 use crate::error::Result;
+use crate::{log_debug, log_error};
 use serde::Serialize;
 
 #[command]
 pub async fn get_installed_games(game_manager: tauri::State<'_, GameManager>) -> std::result::Result<Vec<Game>, String> {
-    game_manager.get_installed_games().await.map_err(|e| e.to_string())
+    log_debug!("Command: get_installed_games");
+    game_manager.get_installed_games().await
+        .map_err(|e| {
+            log_error!("Failed to get installed games: {}", e);
+            e.to_string()
+        })
 }
 
 #[command]
 pub async fn refresh_games_list(game_manager: tauri::State<'_, GameManager>) -> std::result::Result<Vec<Game>, String> {
-    game_manager.refresh_games_list().await.map_err(|e| e.to_string())
+    log_debug!("Command: refresh_games_list");
+    game_manager.refresh_games_list().await
+        .map_err(|e| {
+            log_error!("Failed to refresh games list: {}", e);
+            e.to_string()
+        })
 }
 
 #[command]
 pub async fn update_game(game_id: String, game_manager: tauri::State<'_, GameManager>) -> std::result::Result<(), String> {
-    game_manager.update_game(&game_id).await.map_err(|e| e.to_string())
+    log_debug!("Command: update_game, game_id: {}", game_id);
+    game_manager.update_game(&game_id).await
+        .map_err(|e| {
+            log_error!("Failed to update game {}: {}", game_id, e);
+            e.to_string()
+        })
 }
 
 #[command]
 pub async fn check_game_updates(game_id: String, game_manager: tauri::State<'_, GameManager>) -> std::result::Result<bool, String> {
-    game_manager.check_game_updates(&game_id).await.map_err(|e| e.to_string())
+    log_debug!("Command: check_game_updates, game_id: {}", game_id);
+    game_manager.check_game_updates(&game_id).await
+        .map_err(|e| {
+            log_error!("Failed to check updates for game {}: {}", game_id, e);
+            e.to_string()
+        })
 }
 
 #[command]
 pub async fn get_settings(settings_manager: tauri::State<'_, SettingsManager>) -> std::result::Result<Settings, String> {
-    settings_manager.load().await.map_err(|e| e.to_string())
+    log_debug!("Command: get_settings");
+    settings_manager.load().await
+        .map_err(|e| {
+            log_error!("Failed to load settings: {}", e);
+            e.to_string()
+        })
 }
 
 #[command]
 pub async fn save_settings(settings: Settings, settings_manager: tauri::State<'_, SettingsManager>) -> std::result::Result<(), String> {
-    settings_manager.save(&settings).await.map_err(|e| e.to_string())
+    log_debug!("Command: save_settings");
+    settings_manager.save(&settings).await
+        .map_err(|e| {
+            log_error!("Failed to save settings: {}", e);
+            e.to_string()
+        })
 }
 
 #[command]

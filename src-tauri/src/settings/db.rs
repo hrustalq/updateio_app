@@ -1,6 +1,8 @@
 use sqlx::{Pool, Sqlite, Row};
 use directories::ProjectDirs;
 use crate::error::{Result, Error};
+use crate::logging::LogRotation;
+use crate::log_info;
 use super::Settings;
 
 pub async fn init_database() -> Result<Pool<Sqlite>> {
@@ -19,7 +21,7 @@ pub async fn init_database() -> Result<Pool<Sqlite>> {
             .map_err(|e| Error::Database(format!("Failed to create database file: {}", e)))?;
     }
 
-    tracing::info!("Database path: {}", db_path.display());
+    log_info!("Database path: {}", db_path.display());
     
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(5)
@@ -62,7 +64,18 @@ pub async fn load_settings(pool: &Pool<Sqlite>) -> Result<Settings> {
             "epic_path" => settings.paths.epic = Some(value),
             "cache_ttl_minutes" => settings.cache_ttl_minutes = value.parse().unwrap_or(30),
             "cache_size" => settings.cache_size = value.parse().unwrap_or(1000),
-            "log_level" => settings.log_level = value,
+            "log_level" => settings.logging.level = value,
+            "log_file_name" => settings.logging.file_name = value,
+            "log_rotation" => {
+                settings.logging.rotation = match value.as_str() {
+                    "minutely" => LogRotation::Minutely,
+                    "hourly" => LogRotation::Hourly,
+                    "daily" => LogRotation::Daily,
+                    "never" => LogRotation::Never,
+                    _ => LogRotation::Daily,
+                }
+            },
+            "log_custom_path" => settings.logging.custom_path = Some(value.into()),
             "custom_steamcmd_path" => settings.custom_steamcmd_path = Some(value.into()),
             "steam_username" => settings.steam_username = Some(value),
             "steam_password" => settings.steam_password = Some(value),
@@ -92,7 +105,18 @@ pub async fn save_settings(pool: &Pool<Sqlite>, settings: &Settings) -> Result<(
         ("check_interval", settings.check_interval.to_string()),
         ("cache_ttl_minutes", settings.cache_ttl_minutes.to_string()),
         ("cache_size", settings.cache_size.to_string()),
-        ("log_level", settings.log_level.clone()),
+        ("log_level", settings.logging.level.clone()),
+        ("log_file_name", settings.logging.file_name.clone()),
+        (
+            "log_rotation",
+            match settings.logging.rotation {
+                LogRotation::Minutely => "minutely",
+                LogRotation::Hourly => "hourly",
+                LogRotation::Daily => "daily",
+                LogRotation::Never => "never",
+            }
+            .to_string(),
+        ),
     ];
 
     for (key, value) in settings_to_save {
@@ -118,6 +142,16 @@ pub async fn save_settings(pool: &Pool<Sqlite>, settings: &Settings) -> Result<(
         sqlx::query("INSERT INTO settings (key, value) VALUES (?, ?)")
             .bind("epic_path")
             .bind(path)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
+    }
+
+    // Сохраняем настройки логирования
+    if let Some(path) = &settings.logging.custom_path {
+        sqlx::query("INSERT INTO settings (key, value) VALUES (?, ?)")
+            .bind("log_custom_path")
+            .bind(path.to_string_lossy().to_string())
             .execute(&mut *tx)
             .await
             .map_err(|e| Error::Database(e.to_string()))?;

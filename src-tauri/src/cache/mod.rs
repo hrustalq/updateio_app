@@ -18,6 +18,7 @@ pub struct CacheEntry {
 }
 
 impl CacheEntry {
+    #[allow(dead_code)]
     pub fn is_valid(&self) -> bool {
         let now = Utc::now();
         now.signed_duration_since(self.checked_at) < Duration::minutes(CACHE_TTL_MINUTES)
@@ -37,11 +38,13 @@ impl UpdateCache {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, app_id: u32) -> Option<CacheEntry> {
         let mut cache = self.cache.lock();
         cache.get(&app_id).cloned().filter(|entry| entry.is_valid())
     }
 
+    #[allow(dead_code)]
     pub fn set(&self, app_id: u32, needs_update: bool) {
         let mut cache = self.cache.lock();
         let entry = CacheEntry {
@@ -51,6 +54,7 @@ impl UpdateCache {
         cache.put(app_id, entry);
     }
 
+    #[allow(dead_code)]
     pub fn invalidate(&self, app_id: u32) {
         let mut cache = self.cache.lock();
         cache.pop(&app_id);
@@ -96,6 +100,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         cache.put(key, value);
     }
 
+    #[allow(dead_code)]
     pub fn invalidate(&self, key: &K) {
         let mut cache = self.cache.lock();
         cache.pop(key);

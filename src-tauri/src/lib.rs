@@ -5,12 +5,13 @@ pub mod registry;
 pub mod games;
 pub mod settings;
 pub mod commands;
+pub mod logging;
 
 use parking_lot::Mutex;
 use crate::settings::manager::SettingsManager;
 use crate::games::manager::GameManager;
+use crate::logging::{Logger, LogConfig, LogRotation};
 use tauri::Manager;
-use tracing::info;
 use std::sync::Arc;
 
 pub use error::{Error, Result};
@@ -20,6 +21,7 @@ pub struct AppState {
     pub settings: Arc<Mutex<Option<SettingsManager>>>,
     pub game_manager: Arc<Mutex<GameManager>>,
     pub runtime: Arc<tokio::runtime::Runtime>,
+    pub logger: Arc<Logger>,
 }
 
 impl AppState {
@@ -27,34 +29,34 @@ impl AppState {
         settings_manager: SettingsManager,
         game_manager: GameManager,
         runtime: Arc<tokio::runtime::Runtime>,
+        logger: Logger,
     ) -> Self {
         Self {
             settings: Arc::new(Mutex::new(Some(settings_manager))),
             game_manager: Arc::new(Mutex::new(game_manager)),
             runtime,
+            logger: Arc::new(logger),
         }
     }
 }
 
-fn setup_logging() {
-    use tracing_subscriber::{fmt, EnvFilter};
+fn setup_logging() -> Result<Logger> {
+    let config = LogConfig {
+        level: "debug".to_string(),
+        file_name: "updateio.log".to_string(),
+        rotation: LogRotation::Daily,
+        custom_path: None,
+    };
 
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
-
-    fmt()
-        .with_env_filter(filter)
-        .with_target(false)
-        .with_thread_ids(true)
-        .with_thread_names(true)
-        .with_file(true)
-        .with_line_number(true)
-        .init();
+    let logger = Logger::new(config);
+    logger.init().map_err(|e| Error::Other(e.to_string()))?;
+    Ok(logger)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    setup_logging();
-    info!("Starting UpdateIO application");
+    let logger = setup_logging().expect("Failed to setup logging");
+    log_info!("Starting UpdateIO application");
 
     let runtime = Arc::new(tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime"));
     let runtime_clone = runtime.clone();
@@ -79,6 +81,7 @@ pub fn run() {
                 settings_manager,
                 game_manager,
                 runtime_clone,
+                logger.clone(),
             ));
 
             #[cfg(debug_assertions)]

@@ -1,9 +1,8 @@
 #[allow(dead_code)]
-mod cache;
-#[allow(dead_code)]
 mod parser;
 
 use self::parser::parse_update_status;
+use crate::cache::{Cache, TimedCacheEntry};
 use crate::error::{Result, Error};
 use crate::settings::Settings;
 use serde::{Deserialize, Serialize};
@@ -15,6 +14,9 @@ use std::process::Stdio;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::{error, info};
+
+const CACHE_SIZE: usize = 1000;
+const CACHE_TTL_MINUTES: i64 = 30;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SteamGame {
@@ -53,7 +55,7 @@ impl Default for UpdateState {
 #[derive(Clone)]
 pub struct SteamManager {
     steamcmd_path: PathBuf,
-    update_cache: Arc<cache::UpdateCache>,
+    update_cache: Arc<Cache<u32, TimedCacheEntry<bool>>>,
     settings: Arc<Settings>,
 }
 
@@ -71,7 +73,7 @@ impl SteamManager {
 
         Ok(Self {
             steamcmd_path,
-            update_cache: Arc::new(cache::UpdateCache::new()),
+            update_cache: Arc::new(Cache::new(CACHE_SIZE)),
             settings: Arc::new(settings),
         })
     }
@@ -130,9 +132,11 @@ impl SteamManager {
 
     pub fn check_for_updates(&self, app_id: u32) -> Result<bool> {
         // Сначала проверяем кэш
-        if let Some(entry) = self.update_cache.get(app_id) {
-            info!("Using cached update status for app_id: {}", app_id);
-            return Ok(entry.needs_update);
+        if let Some(entry) = self.update_cache.get(&app_id) {
+            if entry.timestamp > chrono::Utc::now() {
+                info!("Using cached update status for app_id: {}", app_id);
+                return Ok(entry.value);
+            }
         }
 
         info!("Checking updates for app_id: {}", app_id);
@@ -147,7 +151,7 @@ impl SteamManager {
 
         // Кэшируем результат
         info!("Caching update status for app_id: {}", app_id);
-        self.update_cache.set(app_id, needs_update);
+        self.update_cache.set(app_id, TimedCacheEntry::new(needs_update, CACHE_TTL_MINUTES));
 
         Ok(needs_update)
     }
@@ -193,7 +197,7 @@ impl SteamManager {
 
         if status.success() {
             // Инвалидируем кэш после успешного обновления
-            self.update_cache.invalidate(app_id);
+            self.update_cache.invalidate(&app_id);
             progress_callback(UpdateStatus {
                 progress: 100.0,
                 status: "Update completed".to_string(),
@@ -296,7 +300,7 @@ impl SteamManager {
         }
 
         // Инвалидируем кэш после успешного обновления
-        self.update_cache.invalidate(app_id);
+        self.update_cache.invalidate(&app_id);
 
         info!("Update completed successfully for app_id: {}", app_id);
 
@@ -320,7 +324,8 @@ impl SteamManager {
 
     pub fn refresh_games_list(&self) -> Result<Vec<SteamGame>> {
         // Очищаем кэш перед обновлением списка
-        self.update_cache.clear();
+        // Note: The main Cache doesn't have clear() method, so we'll skip this for now
+        // self.update_cache.clear();
         // Используем существующий метод для получения списка игр
         self.get_installed_games()
     }

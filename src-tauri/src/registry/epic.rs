@@ -40,9 +40,9 @@ impl RegistryReader for EpicRegistry {
 
         if manifest_path.exists() {
             for entry in std::fs::read_dir(&manifest_path)
-                .map_err(|e| Error::Io(e))?
+                .map_err(|e| Error::ProcessError(e.to_string()))?
             {
-                let entry = entry.map_err(|e| Error::Io(e))?;
+                let entry = entry.map_err(|e| Error::ProcessError(e.to_string()))?;
                 let path = entry.path();
 
                 if let Some(ext) = path.extension() {

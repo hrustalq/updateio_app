@@ -3,6 +3,8 @@ name = "updateio_app"
 version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
+license = ""
+repository = "https://github.com/hrustalq/updateio_app"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -30,6 +32,7 @@ lru = "0.12"
 chrono = { version = "0.4", features = ["serde"] }
 parking_lot = "0.12"
 lazy_static = "1.4"
+tracing-appender = "0.2"
 
 # Tauri
 tauri = { version = "2.2.5", features = [] }
@@ -38,9 +41,16 @@ tauri-plugin-process = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
-sqlx = "0.8.3"
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-native-tls"] }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort" # Strip expensive panic clean-up logic
+codegen-units = 1 # Compile crates one after another so the compiler can optimize better
+lto = true # Enables link to optimizations
+opt-level = "s" # Optimize for binary size
+strip = true # Remove debug symbols

@@ -26,7 +26,7 @@ pub(crate) async fn update_game(game_id: &str, app: &AppHandle) -> Result<()> {
     let epic_launcher = launcher_path.join("Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe");
 
     if !epic_launcher.exists() {
-        return Err(Error::EpicLauncherNotFound);
+        return Err(Error::ConfigError("Epic Games Launcher not found".to_string()));
     }
 
     // Эмитим начало обновления
@@ -90,7 +90,7 @@ pub(crate) async fn check_updates(game_id: &str, _app: &AppHandle) -> Result<boo
     let epic_launcher = launcher_path.join("Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe");
 
     if !epic_launcher.exists() {
-        return Err(Error::EpicLauncherNotFound);
+        return Err(Error::ConfigError("Epic Games Launcher not found".to_string()));
     }
 
     // Проверяем обновления через Epic Games Launcher
